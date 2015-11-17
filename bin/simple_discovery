@@ -1,0 +1,106 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""
+discovery_driver.py: Implementation of discovery driver for WiSHFUL agent
+
+Usage:
+   discovery_driver.py [options] [-q | -v]
+   discovery_driver.py --config
+
+Options:
+   -f                               foo
+   -c, --controller address         IP address of controller
+   -p, --port port                  port for communication with server
+
+Other options:
+   -h, --help          show this help message and exit
+   -q, --quiet         print less text
+   -v, --verbose       print more text
+   --version           show version and exit
+"""
+
+import logging
+import time
+import zmq
+import random
+import sys
+
+__author__ = "Piotr Gawlowicz, Mikolaj Chwalisz"
+__copyright__ = "Copyright (c) 2015, Technische Universität Berlin"
+__version__ = "0.1.0"
+__email__ = "{gawlowicz, chwalisz}@tkn.tu-berlin.de"
+
+def start_discovery():
+    return "DISCOVERY STARTED - OK"
+
+def send_discovery_msg(socket, controller):
+
+    #wait 5s with discovery message
+    time.sleep(5)
+    discoveryMsg = controller
+    socket.send_multipart(["CONTROLLER_DISCOVERED", discoveryMsg])
+
+    while True:
+           msg = socket.recv_multipart()
+           log = logging.getLogger('discovery_driver.main')
+           log.debug("discovery driver recived msg: {0}".format(msg))
+
+           log.debug("discovery process msg: {0}".format(msg))
+
+           #TODO: get msg type
+           response = None
+           msgType = msg
+           if msgType == "START_DISCOVERY":
+               response = start_discovery()
+
+           if response:
+               log.debug("discovery sends response: {0}".format(response))
+               socket.send_multipart(["DISCOVERY", response])
+
+
+def main(args):
+    log = logging.getLogger('discovery_driver.main')
+    log.debug(args)
+
+    port = args['--port']
+    controller = args['--controller']
+    controller = controller.replace(" ", "")
+
+    log.debug("Controller to connect : {0}".format(controller))
+
+    #Connect to WiSHFUL Agent
+    context = zmq.Context()
+    socket = context.socket(zmq.PAIR)
+    socket.connect("tcp://localhost:%s" % port)
+
+    try:
+        send_discovery_msg(socket, controller)
+    except KeyboardInterrupt:
+        log.debug("discovery_driver exits")
+
+
+if __name__ == "__main__":
+    try:
+        from docopt import docopt
+    except:
+        print("""
+        Please install docopt using:
+            pip install docopt==0.6.1
+        For more refer to:
+        https://github.com/docopt/docopt
+        """)
+        raise
+
+    args = docopt(__doc__, version=__version__)
+
+    log_level = logging.INFO  # default
+    if args['--verbose']:
+        log_level = logging.DEBUG
+    elif args['--quiet']:
+        log_level = logging.ERROR
+
+    logging.basicConfig(level=log_level,
+        format='%(asctime)s - %(name)s.%(funcName)s() - %(levelname)s - %(message)s')
+
+    main(args)
