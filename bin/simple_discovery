@@ -32,31 +32,45 @@ __version__ = "0.1.0"
 __email__ = "{gawlowicz, chwalisz}@tkn.tu-berlin.de"
 
 def start_discovery():
-    return "DISCOVERY STARTED - OK"
+
+    group = "RESPONSE"
+    msgType = "DISCOVERY_STARTED_OK"
+    msg = "DISCOVERY_STARTED_OK"
+    msgContainer = [group, msgType, msg]
+
+    return msgContainer
 
 def send_discovery_msg(socket, controller):
 
     #wait 5s with discovery message
     time.sleep(5)
-    discoveryMsg = controller
-    socket.send_multipart(["CONTROLLER_DISCOVERED", discoveryMsg])
+
+    group = "CONTROLLER_DISCOVERED"
+    msgType = "CONTROLLER_DISCOVERED"
+    msg = controller
+    msgContainer = [group, msgType, msg]
+
+    socket.send_multipart(msgContainer)
 
     while True:
-           msg = socket.recv_multipart()
+           msgContainer = socket.recv_multipart()
+
+           assert len(msgContainer) == 3
+           group = msgContainer[0]
+           msgType = msgContainer[1]
+           msg = msgContainer[2]
+
            log = logging.getLogger('discovery_driver.main')
            log.debug("discovery driver recived msg: {0}".format(msg))
 
            log.debug("discovery process msg: {0}".format(msg))
 
-           #TODO: get msg type
-           response = None
-           msgType = msg
            if msgType == "START_DISCOVERY":
                response = start_discovery()
 
            if response:
                log.debug("discovery sends response: {0}".format(response))
-               socket.send_multipart(["DISCOVERY", response])
+               socket.send_multipart(response)
 
 
 def main(args):
