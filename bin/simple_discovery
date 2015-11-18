@@ -9,9 +9,10 @@ Usage:
    discovery_driver.py --config
 
 Options:
-   -f                               foo
-   -c, --controller address         IP address of controller
-   -p, --port port                  port for communication with server
+   -f                                 foo
+   -d, --downlink dladdress           For communication in downlink direction
+   -u, --uplink upaddress             For communication in uplink direction
+   -p, --port port                    port for communication with server
 
 Other options:
    -h, --help          show this help message and exit
@@ -78,10 +79,13 @@ def main(args):
     log.debug(args)
 
     port = args['--port']
-    controller = args['--controller']
-    controller = controller.replace(" ", "")
+    controllerDl = args['--downlink']
+    controllerUl = args['--uplink']
 
-    log.debug("Controller to connect : {0}".format(controller))
+    controllerDl = controllerDl.replace(" ", "")
+    controllerUl = controllerUl.replace(" ", "")
+
+    log.debug("Controller to connect : DL:{0} and UL:{1}".format(controllerDl, controllerUl))
 
     #Connect to WiSHFUL Agent
     context = zmq.Context()
@@ -89,7 +93,7 @@ def main(args):
     socket.connect("tcp://localhost:%s" % port)
 
     try:
-        send_discovery_msg(socket, controller)
+        send_discovery_msg(socket, controllerDl)
     except KeyboardInterrupt:
         log.debug("discovery_driver exits")
 
