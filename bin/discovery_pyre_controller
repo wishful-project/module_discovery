@@ -42,8 +42,6 @@ def main(args):
     log.debug(args)
 
     port = args['--port']
-    interface = args['--interface']
-    interface = interface.replace(" ", "")
 
     #Connect to WiSHFUL Agent
     context = zmq.Context()
