@@ -26,52 +26,39 @@ import time
 import zmq
 import random
 import sys
+import wishful_upis.msgs.management_pb2 as msgMgmt
+from wishful_upis.msgs.msg_helper import get_msg_type
 
 __author__ = "Piotr Gawlowicz, Mikolaj Chwalisz"
 __copyright__ = "Copyright (c) 2015, Technische Universität Berlin"
 __version__ = "0.1.0"
 __email__ = "{gawlowicz, chwalisz}@tkn.tu-berlin.de"
 
+
 def start_discovery():
+    log = logging.getLogger('discovery_driver.main')
+    log.debug("Start discovery procedure".format())
 
-    group = "RESPONSE"
-    msgType = "DISCOVERY_STARTED_OK"
-    msg = "DISCOVERY_STARTED_OK"
-    msgContainer = [group, msgType, msg]
 
-    return msgContainer
+def send_discovery_msg(socket, controllerDl, controllerUl):
 
-def send_discovery_msg(socket, controller):
+    start_discovery()
+    #wait 3s with discovery message
+    time.sleep(3)
 
-    #wait 5s with discovery message
-    time.sleep(5)
+    group = "LOCAL"
+    msgDesc = msgMgmt.MsgDesc()
+    msgDesc.msg_type = get_msg_type(msgMgmt.ControllerDiscoveredMsg)
+    msg = msgMgmt.ControllerDiscoveredMsg()
+    msg.down_link = controllerDl
+    msg.up_link = controllerUl
 
-    group = "CONTROLLER_DISCOVERED"
-    msgType = "CONTROLLER_DISCOVERED"
-    msg = controller
-    msgContainer = [group, msgType, msg]
+    msgContainer = [group, msgDesc.SerializeToString(), msg.SerializeToString()]
 
     socket.send_multipart(msgContainer)
 
     while True:
-           msgContainer = socket.recv_multipart()
-
-           assert len(msgContainer) == 3
-           group = msgContainer[0]
-           msgType = msgContainer[1]
-           msg = msgContainer[2]
-
-           log = logging.getLogger('discovery_driver.main')
-           log.debug("discovery driver recived msg: {0}".format(msg))
-
-           log.debug("discovery process msg: {0}".format(msg))
-
-           if msgType == "START_DISCOVERY":
-               response = start_discovery()
-
-           if response:
-               log.debug("discovery sends response: {0}".format(response))
-               socket.send_multipart(response)
+        time.sleep(10)
 
 
 def main(args):
@@ -93,7 +80,7 @@ def main(args):
     socket.connect("tcp://localhost:%s" % port)
 
     try:
-        send_discovery_msg(socket, controllerDl)
+        send_discovery_msg(socket, controllerDl, controllerUl)
     except KeyboardInterrupt:
         log.debug("discovery_driver exits")
 
