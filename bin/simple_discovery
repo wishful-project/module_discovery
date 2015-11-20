@@ -43,19 +43,36 @@ def start_discovery():
 def send_discovery_msg(socket, controllerDl, controllerUl):
 
     start_discovery()
-    #wait 3s with discovery message
-    time.sleep(3)
 
-    group = "LOCAL"
-    msgDesc = msgMgmt.MsgDesc()
-    msgDesc.msg_type = get_msg_type(msgMgmt.ControllerDiscoveredMsg)
-    msg = msgMgmt.ControllerDiscoveredMsg()
-    msg.down_link = controllerDl
-    msg.up_link = controllerUl
+    while True:
+        try:
+            msgContainer = socket.recv_multipart(zmq.NOBLOCK)
 
-    msgContainer = [group, msgDesc.SerializeToString(), msg.SerializeToString()]
+            assert len(msgContainer) == 3
+            group = msgContainer[0]
+            msgDesc = msgMgmt.MsgDesc()
+            msgDesc.ParseFromString(msgContainer[1])
+            msg = msgMgmt.DiscoverySuccessMsg()
+            msg.ParseFromString(msgContainer[2])
 
-    socket.send_multipart(msgContainer)
+            if msg.status:
+                break
+        except zmq.ZMQError:
+            pass
+
+        #wait 3s with discovery message
+        time.sleep(3)
+
+        group = "LOCAL"
+        msgDesc = msgMgmt.MsgDesc()
+        msgDesc.msg_type = get_msg_type(msgMgmt.ControllerDiscoveredMsg)
+        msg = msgMgmt.ControllerDiscoveredMsg()
+        msg.down_link = controllerDl
+        msg.up_link = controllerUl
+
+        msgContainer = [group, msgDesc.SerializeToString(), msg.SerializeToString()]
+
+        socket.send_multipart(msgContainer)
 
     while True:
         time.sleep(10)
