@@ -35,47 +35,53 @@ __version__ = "0.1.0"
 __email__ = "{gawlowicz, chwalisz}@tkn.tu-berlin.de"
 
 
-def start_discovery():
+def start_discovery(socket, controllerDl, controllerUl):
+
     log = logging.getLogger('discovery_driver.main')
     log.debug("Start discovery procedure".format())
 
-
-def send_discovery_msg(socket, controllerDl, controllerUl):
-
-    start_discovery()
+    working = True
 
     while True:
-        try:
-            msgContainer = socket.recv_multipart(zmq.NOBLOCK)
+        while True:
+            try:
+                msgContainer = socket.recv_multipart(zmq.NOBLOCK)
+            except zmq.ZMQError:
+                break
 
             assert len(msgContainer) == 3
             group = msgContainer[0]
             msgDesc = msgMgmt.MsgDesc()
             msgDesc.ParseFromString(msgContainer[1])
-            msg = msgMgmt.DiscoverySuccessMsg()
-            msg.ParseFromString(msgContainer[2])
 
-            if msg.status:
-                break
-        except zmq.ZMQError:
-            pass
+            if msgDesc.msg_type == get_msg_type(msgMgmt.DiscoverySuccessMsg):
+                msg = msgMgmt.DiscoverySuccessMsg()
+                msg.ParseFromString(msgContainer[2])
+                working = False
+            elif msgDesc.msg_type == get_msg_type(msgMgmt.DiscoveryRestartMsg):
+                msg = msgMgmt.DiscoverySuccessMsg()
+                msg.ParseFromString(msgContainer[2])
+                working = True
+            else:
+                log.debug("Module drops unknown message: {0} from agent".format(msgDesc.msg_type))
 
-        #wait 3s with discovery message
+
+        if working:
+            #wait 3s with discovery message
+            time.sleep(3)
+
+            group = "LOCAL"
+            msgDesc = msgMgmt.MsgDesc()
+            msgDesc.msg_type = get_msg_type(msgMgmt.ControllerDiscoveredMsg)
+            msg = msgMgmt.ControllerDiscoveredMsg()
+            msg.down_link = controllerDl
+            msg.up_link = controllerUl
+
+            msgContainer = [group, msgDesc.SerializeToString(), msg.SerializeToString()]
+
+            socket.send_multipart(msgContainer)
+
         time.sleep(3)
-
-        group = "LOCAL"
-        msgDesc = msgMgmt.MsgDesc()
-        msgDesc.msg_type = get_msg_type(msgMgmt.ControllerDiscoveredMsg)
-        msg = msgMgmt.ControllerDiscoveredMsg()
-        msg.down_link = controllerDl
-        msg.up_link = controllerUl
-
-        msgContainer = [group, msgDesc.SerializeToString(), msg.SerializeToString()]
-
-        socket.send_multipart(msgContainer)
-
-    while True:
-        time.sleep(10)
 
 
 def main(args):
@@ -97,7 +103,7 @@ def main(args):
     socket.connect("tcp://localhost:%s" % port)
 
     try:
-        send_discovery_msg(socket, controllerDl, controllerUl)
+        start_discovery(socket, controllerDl, controllerUl)
     except KeyboardInterrupt:
         log.debug("discovery_driver exits")
 
