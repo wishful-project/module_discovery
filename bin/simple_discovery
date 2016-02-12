@@ -26,8 +26,7 @@ import time
 import zmq
 import random
 import sys
-import wishful_controller.msgs.management_pb2 as msgMgmt
-from wishful_controller.msgs.msg_helper import get_msg_type
+import wishful_framework as msgs
 
 __author__ = "Piotr Gawlowicz, Mikolaj Chwalisz"
 __copyright__ = "Copyright (c) 2015, Technische Universität Berlin"
@@ -51,19 +50,19 @@ def start_discovery(socket, controllerDl, controllerUl):
 
             assert len(msgContainer) == 3
             group = msgContainer[0]
-            msgDesc = msgMgmt.MsgDesc()
-            msgDesc.ParseFromString(msgContainer[1])
+            cmdDesc = msgs.CmdDesc()
+            cmdDesc.ParseFromString(msgContainer[1])
 
-            if msgDesc.msg_type == get_msg_type(msgMgmt.DiscoverySuccessMsg):
-                msg = msgMgmt.DiscoverySuccessMsg()
+            if cmdDesc.type == msgs.get_msg_type(msgs.DiscoverySuccessMsg):
+                msg = msgs.DiscoverySuccessMsg()
                 msg.ParseFromString(msgContainer[2])
                 working = False
-            elif msgDesc.msg_type == get_msg_type(msgMgmt.DiscoveryRestartMsg):
-                msg = msgMgmt.DiscoverySuccessMsg()
+            elif cmdDesc.type == msgs.get_msg_type(msgs.DiscoveryRestartMsg):
+                msg = msgs.DiscoverySuccessMsg()
                 msg.ParseFromString(msgContainer[2])
                 working = True
             else:
-                log.debug("Module drops unknown message: {0} from agent".format(msgDesc.msg_type))
+                log.debug("Module drops unknown message: {} from agent".format(cmdDesc.type))
 
 
         if working:
@@ -71,13 +70,14 @@ def start_discovery(socket, controllerDl, controllerUl):
             time.sleep(3)
 
             group = "LOCAL"
-            msgDesc = msgMgmt.MsgDesc()
-            msgDesc.msg_type = get_msg_type(msgMgmt.ControllerDiscoveredMsg)
-            msg = msgMgmt.ControllerDiscoveredMsg()
+            cmdDesc = msgs.CmdDesc()
+            cmdDesc.type = msgs.get_msg_type(msgs.ControllerDiscoveredMsg)
+            cmdDesc.func_name = msgs.get_msg_type(msgs.ControllerDiscoveredMsg)
+            msg = msgs.ControllerDiscoveredMsg()
             msg.down_link = controllerDl
             msg.up_link = controllerUl
 
-            msgContainer = [group, msgDesc.SerializeToString(), msg.SerializeToString()]
+            msgContainer = [group, cmdDesc.SerializeToString(), msg.SerializeToString()]
 
             socket.send_multipart(msgContainer)
 
