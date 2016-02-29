@@ -24,41 +24,25 @@ class StaticDiscoveryModule(wishful_module.AgentUpiModule):
     @wishful_module.on_start()
     @wishful_module.on_disconnected()
     def start_discovery(self):
-        self.log.debug("Start discovery procedure".format())
-        print "Start discovery procedure".format()
+        self.log.debug("Start static discovery procedure".format())
         self.running = True
         self.controller_dl = None
         self.controller_ul = None
 
         while self.running:
-            print "Discovery"
             self.controller_dl = "tcp://127.0.0.1:8989"
             self.controller_ul = "tcp://127.0.0.1:8990"
             time.sleep(1)
 
+
     @wishful_module.on_exit()
     @wishful_module.on_connected()
     def stop_discovery(self):
-        self.log.debug("Stop discovery procedure".format())
-        print "Stop discovery procedure".format()
+        self.log.debug("Stop static discovery procedure".format())
         self.running = False
+
 
     @wishful_module.discover_controller()
     def get_controller(self):
         self.log.debug("Get Controller addresses: DL:{}, UL:{}".format(self.controller_dl, self.controller_ul))
         return [self.controller_dl, self.controller_ul]
-
-
-if __name__ == "__main__":
-    discovery = StaticDiscoveryModule(1111)
-    discovery.start()
-
-    time.sleep(10)
-    print discovery.get_controller()
-    discovery.connected()
-
-    time.sleep(2)
-    discovery.disconnected()
-
-    time.sleep(10)
-    print discovery.discover_controller()
