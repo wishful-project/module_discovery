@@ -2,7 +2,7 @@ import logging
 import time
 import random
 import wishful_upis as upis
-import wishful_agent as wishful_module
+import wishful_controller
 
 __author__ = "Piotr Gawlowicz"
 __copyright__ = "Copyright (c) 2015, Technische Universitat Berlin"
@@ -10,18 +10,18 @@ __version__ = "0.1.0"
 __email__ = "{gawlowicz}@tkn.tu-berlin.de"
 
 
-@wishful_module.build_module
-class StaticDiscoveryControllerModule(wishful_module.AgentUpiModule):
-    def __init__(self, agentPort=None):
-        super(StaticDiscoveryControllerModule, self).__init__(agentPort)
+@wishful_controller.build_module
+class StaticDiscoveryControllerModule(wishful_controller.ControllerModule):
+    def __init__(self):
+        super(StaticDiscoveryControllerModule, self).__init__()
         self.log = logging.getLogger('static_discovery_module.main')
         self.running = False
         self.controller_dl = "tcp://127.0.0.1:8989"
         self.controller_ul = "tcp://127.0.0.1:8990"
 
 
-    @wishful_module.loop()
-    @wishful_module.on_start()
+    @wishful_controller.loop()
+    @wishful_controller.on_start()
     def start_discovery_announcements(self):
         self.log.debug("Start discovery announcements".format())
         self.running = True
@@ -30,7 +30,7 @@ class StaticDiscoveryControllerModule(wishful_module.AgentUpiModule):
             time.sleep(5)
 
 
-    @wishful_module.on_exit()
+    @wishful_controller.on_exit()
     def stop_discovery_announcements(self):
         self.log.debug("Stop discovery announcements".format())
         self.running = False
