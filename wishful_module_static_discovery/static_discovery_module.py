@@ -12,12 +12,12 @@ __email__ = "{gawlowicz}@tkn.tu-berlin.de"
 
 @wishful_agent.build_module
 class StaticDiscoveryModule(wishful_agent.AgentModule):
-    def __init__(self):
+    def __init__(self, downlink, uplink):
         super(StaticDiscoveryModule, self).__init__()
         self.log = logging.getLogger('static_discovery_module.main')
         self.running = False
-        self.controller_dl = None
-        self.controller_ul = None
+        self.controller_dl = downlink
+        self.controller_ul = uplink
 
 
     @wishful_agent.loop()
@@ -26,13 +26,10 @@ class StaticDiscoveryModule(wishful_agent.AgentModule):
     def start_discovery(self):
         self.log.debug("Start static discovery procedure".format())
         self.running = True
-        self.controller_dl = None
-        self.controller_ul = None
 
         while self.running:
-            self.controller_dl = "tcp://127.0.0.1:8989"
-            self.controller_ul = "tcp://127.0.0.1:8990"
-            time.sleep(1)
+            #do nothing
+            time.sleep(10)
 
 
     @wishful_agent.on_exit()
