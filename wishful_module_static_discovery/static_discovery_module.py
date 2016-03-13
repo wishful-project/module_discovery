@@ -28,7 +28,7 @@ class StaticDiscoveryModule(wishful_framework.WishfulModule):
 
         while self.running:
             #do nothing
-            time.sleep(10)
+            time.sleep(2)
 
 
     @wishful_framework.on_exit()
