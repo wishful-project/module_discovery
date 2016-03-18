@@ -1,1 +1,1 @@
-from static_discovery_module import *
+from .static_discovery_module import *
