@@ -30,7 +30,7 @@ class StaticDiscoveryModule(wishful_framework.WishfulModule):
                            .format(self.controller_dl,
                                    self.controller_ul))
             self.send_event(
-                upis.mgmt.ControllerDiscoveredEvent(
+                upis.mgmt.BrokerDiscoveredEvent(
                     self.controller_dl, self.controller_ul)
             )
 
